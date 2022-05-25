@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Plugin Name: NY Intergroup PDF Generator
+ * Plugin Name: Grand Strand AA modified from NY Intergroup PDF Generator
  */
 
 //generates form from shortcode
@@ -12,14 +12,14 @@ include('pdf.php');
 
 //for guide page
 function format_time($string) {
-	if ($string == '12:00') return '12N';
-	if ($string == '23:59') return '12M';
+	if ($string == '12:00') return 'NOON';
+	if ($string == '23:59') return 'Midnight';
 	list($hours, $minutes) = explode(':', $string);
 	$hours -= 0;
-	if ($hours == 0) return '12:' . $minutes . 'a';
-	if ($hours < 12) return $hours . ':' . $minutes . 'a';
+	if ($hours == 0) return '12:' . $minutes . ' AM';
+	if ($hours < 12) return $hours . ':' . $minutes . ' AM';
 	if ($hours > 12) $hours -= 12;
-	return $hours . ':' . $minutes;
+	return $hours . ':' . $minutes . ' PM';
 }
 
 //need this for formatting the meeting types
@@ -85,11 +85,13 @@ function attachPdfMeetingData($regions) {
 			$parts = explode(', ', $meeting['formatted_address']);
 			$rows[$meeting['region_id']][$key] = array(
 				'group' => @$meeting['group'],
-				'location' => @$meeting['location'],
+				'location' => (substr(@$meeting['location'],0,2) == substr($parts[0],0,2) ? '' : @$meeting['location']),
 				'address' => $parts[0],
+				'city' => $parts[1],
 				'postal_code' => substr($parts[2], 3),
 				'notes' => @$meeting['location_notes'],
-				'last_contact' => empty($meeting['last_contact']) ? null : date('n/j/y', strtotime($meeting['last_contact'])),
+				'group_notes' => @$meeting['group_notes'],
+				//'last_contact' => empty($meeting['last_contact']) ? null : date('n/j/y', strtotime($meeting['last_contact'])),
 				'wheelchair' => false,
 				'spanish' => true,
 				'days' => array(
@@ -118,8 +120,65 @@ function attachPdfMeetingData($regions) {
 		//at least one meeting *not* tagged spanish means row is not "spanish"
 		if (!in_array('S', $meeting['types'])) $rows[$meeting['region_id']][$key]['spanish'] = false;
 		
+		//This line will remove ONL if you don't wish to display that option in online lists
+		//if (($index = array_search('ONL',  $meeting['types'])) !== false) unset($meeting['types'][$index]);
+		
+		
+		//Arrange Order of Types
+		
+		if (($index = array_search('S',  $meeting['types'])) !== false) {
+			unset($meeting['types'][$index]); //Remove S for Spanish as it is already indicated at group level
+		}
+		
+		if (($index = array_search('A',  $meeting['types'])) !== false) {
+			unset($meeting['types'][$index]); //Change A to SE for secular
+			$meeting['types'][] = "SE";
+		}
+		
+		if (($index = array_search('B',  $meeting['types'])) !== false) {
+			unset($meeting['types'][$index]);
+			array_unshift($meeting['types'], "BB"); //Changes B to BB for Big Book
+		}
+		
+		if (($index = array_search('M',  $meeting['types'])) !== false) {
+			unset($meeting['types'][$index]);
+			array_unshift($meeting['types'], "M");
+		}
+		
+		if (($index = array_search('W',  $meeting['types'])) !== false) {
+			unset($meeting['types'][$index]);
+			array_unshift($meeting['types'], "W");
+		}
+		
+		if (($index = array_search('BE',  $meeting['types'])) !== false) {
+			unset($meeting['types'][$index]);
+			array_unshift($meeting['types'], "NC");
+		}
+		
+		if (($index = array_search('D',  $meeting['types'])) !== false) {
+			unset($meeting['types'][$index]);
+			array_unshift($meeting['types'], "D");
+		}
+		
+		if (($index = array_search('SP',  $meeting['types'])) !== false) {
+			unset($meeting['types'][$index]);
+			array_unshift($meeting['types'], "S");
+		}
+		
+		if (($index = array_search('O',  $meeting['types'])) !== false) {
+			unset($meeting['types'][$index]);
+			array_unshift($meeting['types'], "O");
+		}
+		
+		if (($index = array_search('C',  $meeting['types'])) !== false) {
+			unset($meeting['types'][$index]);
+			array_unshift($meeting['types'], "C");
+		}
 		//insert into day
-		$time = ''; 
+		$time = format_time($meeting['time']) . "\n"; //Types on New Line
+		$time .= implode(', ', $meeting['types']);
+		$time .= "\n";
+		/* 
 		if (($index = array_search('D',  $meeting['types'])) !== false) {
 			$time .= 'OD-'; //open discussion meeting (comes before open because all ODs are open)
 			unset($meeting['types'][$index]);
@@ -148,25 +207,28 @@ function attachPdfMeetingData($regions) {
 		//per Janet, don't need Closed meeting type now because it's implied
 		if (($index = array_search('C', $meeting['types'])) !== false) {
 			unset($meeting['types'][$index]);
-		}
+		} 
+		*/
 			
 		//append footnote to array
 		if (!empty($meeting['types']) || !empty($meeting['notes'])) {
 			//decide what this meeting's footnote should be
-			$footnote = array_map('decode_types', $meeting['types']);
-			if (!empty($meeting['notes'])) $footnote[] = $meeting['notes'];
-			$footnote = implode(', ', $footnote);
+			//$footnote = array_map('decode_types', $meeting['types']);
+			//if (!empty($meeting['notes'])) $footnote[] = $meeting['notes'];
+			//$footnote = implode(', ', $footnote);
+			
+			
 			
 			//add footnote if not full
 			$count_footnotes = count($rows[$meeting['region_id']][$key]['footnotes']);
 			//if (!is_array($rows[$meeting['region_id']][$key]['footnotes'])) dd($meeting);
 			if (array_key_exists($footnote, $rows[$meeting['region_id']][$key]['footnotes'])) {
 				$index = array_search($footnote, $rows[$meeting['region_id']][$key]['footnotes']);
-				$time = $symbols[$index] . $time;
-			} elseif ($count_footnotes < $count_symbols) {
-				$rows[$meeting['region_id']][$key]['footnotes'][$footnote] = $symbols[$count_footnotes];
-				$time = $symbols[$count_footnotes] . $time;
-			}
+				//$time = $symbols[$index] . $time;
+			} //elseif ($count_footnotes < $count_symbols) {
+				//$rows[$meeting['region_id']][$key]['footnotes'][$footnote] = $symbols[$count_footnotes];
+				//$time = $symbols[$count_footnotes] . $time;
+			//}
 		}
 	
 		//add meeting to row->day array

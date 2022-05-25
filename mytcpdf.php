@@ -8,7 +8,7 @@ class MyTCPDF extends TCPDF {
 	function __construct() {
 		global $margins, $font_table_rows, $page_width, $page_height, $table_padding;
 		parent::__construct('P', 'mm', array($page_width, $page_height));
-		$this->SetAuthor('New York Inter-Group');
+		$this->SetAuthor('Grand Strand Intergroup');
 		$this->SetTitle('Meeting List');
 		$this->SetMargins($margins['left'], $margins['top'], $margins['right']);
 		$this->SetAutoPageBreak(true, $margins['bottom']);
@@ -30,19 +30,23 @@ class MyTCPDF extends TCPDF {
 		$this->SetY($header_top);
 		$this->SetFont($font_header[0], $font_header[1], $font_header[2]);
 		$this->SetCellPaddings(0, 0, 0, 0);
-		$align = ($page % 2) ? 'R' : 'L';
+		if ($_GET['size'] == "book") {
+			$align = ($page % 2) ? 'R' : 'L';
+		} else {
+			$align = 'L';
+		}
 		$this->Cell(0, 6, $this->header, 0, 1, $align, 0);	
     }
 
     public function Footer() {
-	    global $font_footer, $footer_bottom;
-	    $page = $this->getPage() + $_GET['start'] - 1;
+	    global $font_footer, $footer_bottom, $updated_short;
+	    //$page = $this->getPage() + $_GET['start'] - 1;
+		$text = 'For the most up to date meeting information please visit aamyrtlebeach.org. Published by Grand Strand Intergroup. Updated ' . $updated_short . '.';
 		$this->SetY($footer_bottom);
 		$this->SetFont($font_footer[0], $font_footer[1], $font_footer[2]);
 		$this->SetCellPaddings(0, 0, 0, 0);
-		$align = ($page % 2) ? 'R' : 'L';
-		//Cell($w, $h=0, $txt='', $border=0, $ln=0, $align='', $fill=false, $link='', $stretch=0, $ignore_min_height=false, $calign='T', $valign='M') {
-		$this->Cell(0, 0, $page, 0, false, $align);
+		//$align = ($page % 2) ? 'R' : 'L';
+		$this->Cell(0, 10, $text , 0, false, 'C', 0, '', 0, false, 'T', 'M');
 	}
 	
 	private function guessFirstCellHeight($html) {
@@ -82,21 +86,29 @@ class MyTCPDF extends TCPDF {
 
 	public function drawTable($title, $rows, $region) {
 		global $first_column_width, $day_column_width, $table_border_width, $inner_page_height,
-			$font_table_rows, $index, $exclude_from_indexes, $zip_codes, $table_padding, $line_height_ratio;
+			$font_table_rows, $index, $exclude_from_indexes, $zip_codes, $table_padding, $line_height_ratio, $fontsz_group_name, $medium;
 		
-		$this->drawTableHeader($title);
-
+		if (($this->GetY() + 20) > $inner_page_height) {
+			$this->NewPage();
+			$this->drawTableHeader($title);
+		} else {
+			$this->drawTableHeader($title);
+		}
+		$countRows = count($rows);
+		$originalRows = count($rows);
 		//draw table rows
 		foreach ($rows as $row) {
-						
 			//build first column
-			$group_title = strtoupper($row['group']);
-			if ($row['spanish']) $group_title .= ' SP';
-			if ($row['wheelchair']) $group_title .= ' ♿';
+			$countRows -= 1;
+			$group_title = '<strong>'. strtoupper($row['group']) . '</strong>';
+			$extra = '';
+			if ($row['wheelchair']) $extra .= '<img src="' . $_SERVER['DOCUMENT_ROOT'] . 'wp-content/plugins/grandstrand-pdf/images/handicap.jpg" width="' . $medium . '" height="' . $medium . '" border="0" padding="0"/>';
+			if ($row['spanish']) $extra .= '<span style="font-size:' . $fontsz_group_name . ';font-weight:600;">SP</span>';
 			$left_column = array();
 			if (!empty($row['location']) && ($row['location'] != $row['address'])) $left_column[] = $row['location'];
-			$left_column[] = $row['address'] . ' ' . $row['postal_code'];
+			$left_column[] = $row['address'] . "<br>" . $row['city'] . ', SC '. $row['postal_code'];
 			if (!empty($row['notes'])) $left_column[] = $row['notes'];
+			if (!empty($row['group_notes'])) $left_column[] = $row['group_notes'];
 			if (count($row['footnotes'])) {
 				$footnotes = '';
 				foreach ($row['footnotes'] as $footnote => $symbol) {
@@ -106,12 +118,16 @@ class MyTCPDF extends TCPDF {
 			}
 
 			//floats and position: absolute don't seem to work, not sure how else to right-align this row
+			if ($extra == '') {
+				$html = '<span style="font-size:' . $fontsz_group_name . ';font-weight:600;">' . $group_title . '</span><br>' . implode('<br>', $left_column);
+			} else {
 			$html = '<table width="100%" cellpadding="0" cellspacing="0" border="0">
 				<tr>
-					<td width="80%"><strong>' . $group_title . '</strong></td>
-					<td width="20%" align="right">' . $row['last_contact'] . '</td>
+					<td width="85%"><span style="font-size:' . $fontsz_group_name . ';font-weight:600;">' . $group_title . '</span><br>' . implode('<br>', $left_column) . '</td>
+					<td width="15%" align="left">' . $extra . '</td>
 				</tr>
-			</table>' . implode('<br>', $left_column);
+			</table>';
+			}
 			
 			$line_count = max(
 				$this->getNumLines(implode("\n", $row['days'][0]), $day_column_width),
@@ -129,10 +145,15 @@ class MyTCPDF extends TCPDF {
 			);
 			
 			//why on earth is $row_height not necessary here?
-			if (($this->GetY() + 10) > $inner_page_height) {
+			if (($this->GetY() + 15) > $inner_page_height and $countRows != 0) {
 				$this->NewPage();
 				$this->drawTableHeader($title);
+			} elseif (($this->GetY() + 15) > $inner_page_height and $countRows = 0) {
+				$this->NewPage();
 			}
+			
+			
+			
 							
 			$this->MultiCell($first_column_width, $row_height, $html, array('LTRB'=>array('width' => $table_border_width)), 'L', false, 0, '', '', true, 0, true);
 			foreach ($row['days'] as $day) {
@@ -160,6 +181,7 @@ class MyTCPDF extends TCPDF {
 				}
 				$zip_codes[$row['postal_code']][] = $page;
 			}
+			
 		}
 	}
 }
