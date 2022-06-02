@@ -126,6 +126,19 @@ function attachPdfMeetingData($regions) {
 		
 		//Arrange Order of Types
 		
+		
+		if (($index = array_search('TC',  $meeting['types'])) !== false) {
+			if (($index2 = array_search('ONL',  $meeting['types'])) !== false) {
+				unset($meeting['types'][$index]);
+				unset($meeting['types'][$index2]);
+				$meeting['types'][] = "ONL ONLY";
+			}
+		}
+		
+		if (($index = array_search('TC',  $meeting['types'])) !== false) {
+			$meeting['types'][$index]="TEMP CLOSED";
+		}
+		
 		if (($index = array_search('S',  $meeting['types'])) !== false) {
 			unset($meeting['types'][$index]); //Remove S for Spanish as it is already indicated at group level
 		}
