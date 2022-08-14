@@ -108,7 +108,15 @@ class MyTCPDF extends TCPDF {
 			if (!empty($row['location']) && ($row['location'] != $row['address'])) $left_column[] = $row['location'];
 			$left_column[] = $row['address'] . "<br>" . $row['city'] . ', SC '. $row['postal_code'];
 			if (!empty($row['notes'])) $left_column[] = $row['notes'];
-			if (!empty($row['group_notes'])) $left_column[] = $row['group_notes'];
+			// Add group notes on same line as location notes to save space.
+			if (!empty($row['group_notes'])){
+				if (!empty($row['notes'])){
+					$notes = array_pop($left_column);
+					$left_column[] = $notes . " | " . $row['group_notes'];
+				} else {
+					$left_column[] = $row['group_notes'];
+				}
+			}
 			if (count($row['footnotes'])) {
 				$footnotes = '';
 				foreach ($row['footnotes'] as $footnote => $symbol) {

@@ -186,7 +186,7 @@ function tsml_pdf_gen(){
 	TR=TRADITIONS<br>
 	ONL=ONLINE OPTION*</font></td>
 	</tr>
-	<tr><td colspan="3"><div style="width:100%;text-align:center;"><font size="8">* See website and click Join to reveal password. All meetings are also In Person unless \'ONL ONLY\' specified.</font></div></td></tr>
+	<tr><td colspan="3"><div style="width:100%;text-align:center;"><font size="8">* See website and click Join to reveal password. All meetings are In Person also unless \'ONL ONLY\' specified.</font></div></td></tr>
 	</table>
 	<h4 style="margin-bottom:0px;">OPEN MEETINGS ARE OPEN TO ANYONE TO ATTEND</h4>
 	<h4>CLOSED MEETINGS ARE FOR THOSE WITH A DESIRE TO STOP DRINKING</h4>

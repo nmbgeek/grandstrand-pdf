@@ -117,16 +117,18 @@ function attachPdfMeetingData($regions) {
 			unset($meeting['types'][$index]);
 		}
 		
-		//at least one meeting *not* tagged spanish means row is not "spanish"
-		if (!in_array('S', $meeting['types'])) $rows[$meeting['region_id']][$key]['spanish'] = false;
+		//at least one meeting *not* tagged spanish means row is not "spanish".  
+		if (!in_array('S', $meeting['types'])){
+			$rows[$meeting['region_id']][$key]['spanish'] = false;
+		}
 		
 		//This line will remove ONL if you don't wish to display that option in online lists
 		//if (($index = array_search('ONL',  $meeting['types'])) !== false) unset($meeting['types'][$index]);
 		
 		
-		//Arrange Order of Types
+		//Arrange Order of Types and replace some symbols
 		
-		
+		//If Physical location closed (TC + ONL) to ONL ONLY
 		if (($index = array_search('TC',  $meeting['types'])) !== false) {
 			if (($index2 = array_search('ONL',  $meeting['types'])) !== false) {
 				unset($meeting['types'][$index]);
@@ -134,50 +136,65 @@ function attachPdfMeetingData($regions) {
 				$meeting['types'][] = "ONL ONLY";
 			}
 		}
+		// Change SP to SPA and will change back to SP after S to SP for Speaker below.
+		if (($index = array_search('S',  $meeting['types'])) !== false && $rows[$meeting['region_id']][$key]['spanish'] == false) {
+			$meeting['types'][$index]="SPA";
+		}
 		
+		//Changes TC to TEMP CLOSED and removes all other symbols
 		if (($index = array_search('TC',  $meeting['types'])) !== false) {
-			$meeting['types'][$index]="TEMP CLOSED";
+			$meeting['types'] = array();
+			$meeting['types'][]="TEMP CLOSED";
 		}
 		
+		//Remove S for Spanish as it is already indicated at group level
 		if (($index = array_search('S',  $meeting['types'])) !== false) {
-			unset($meeting['types'][$index]); //Remove S for Spanish as it is already indicated at group level
+			unset($meeting['types'][$index]); 
 		}
 		
+		//Change A to SE for secular
 		if (($index = array_search('A',  $meeting['types'])) !== false) {
-			unset($meeting['types'][$index]); //Change A to SE for secular
+			unset($meeting['types'][$index]); 
 			$meeting['types'][] = "SE";
 		}
 		
+		//Changes B to BB for Big Book
 		if (($index = array_search('B',  $meeting['types'])) !== false) {
 			unset($meeting['types'][$index]);
-			array_unshift($meeting['types'], "BB"); //Changes B to BB for Big Book
+			array_unshift($meeting['types'], "BB"); 
 		}
 		
+		//Changes BE to NC for Newcomer
+		if (($index = array_search('BE',  $meeting['types'])) !== false) {
+			unset($meeting['types'][$index]);
+			array_unshift($meeting['types'], "NC");
+		}
+		
+		//Discussion and Speaker after O, C, M, W
+		if (($index = array_search('D',  $meeting['types'])) !== false) {
+			unset($meeting['types'][$index]);
+			array_unshift($meeting['types'], "D");
+		}
+		
+		//Change Speaker from SP to S
+		if (($index = array_search('SP',  $meeting['types'])) !== false) {
+			unset($meeting['types'][$index]);
+			array_unshift($meeting['types'], "S");
+		}
+		
+		//Men or Women Second
 		if (($index = array_search('M',  $meeting['types'])) !== false) {
 			unset($meeting['types'][$index]);
 			array_unshift($meeting['types'], "M");
 		}
+		
 		
 		if (($index = array_search('W',  $meeting['types'])) !== false) {
 			unset($meeting['types'][$index]);
 			array_unshift($meeting['types'], "W");
 		}
 		
-		if (($index = array_search('BE',  $meeting['types'])) !== false) {
-			unset($meeting['types'][$index]);
-			array_unshift($meeting['types'], "NC");
-		}
-		
-		if (($index = array_search('D',  $meeting['types'])) !== false) {
-			unset($meeting['types'][$index]);
-			array_unshift($meeting['types'], "D");
-		}
-		
-		if (($index = array_search('SP',  $meeting['types'])) !== false) {
-			unset($meeting['types'][$index]);
-			array_unshift($meeting['types'], "S");
-		}
-		
+		//Closed or Open appear at beginning of list
 		if (($index = array_search('O',  $meeting['types'])) !== false) {
 			unset($meeting['types'][$index]);
 			array_unshift($meeting['types'], "O");
@@ -187,6 +204,13 @@ function attachPdfMeetingData($regions) {
 			unset($meeting['types'][$index]);
 			array_unshift($meeting['types'], "C");
 		}
+		
+		//Spanish if not entire row spanish
+		if (($index = array_search('SPA',  $meeting['types'])) !== false && $rows[$meeting['region_id']][$key]['spanish'] == false) {
+			unset($meeting['types'][$index]);
+			array_unshift($meeting['types'], "SP");
+		}
+		
 		//insert into day
 		$time = format_time($meeting['time']) . "\n"; //Types on New Line
 		$time .= implode(', ', $meeting['types']);
