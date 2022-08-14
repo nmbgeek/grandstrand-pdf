@@ -191,8 +191,8 @@ function tsml_pdf_gen(){
 	<h4 style="margin-bottom:0px;">OPEN MEETINGS ARE OPEN TO ANYONE TO ATTEND</h4>
 	<h4>CLOSED MEETINGS ARE FOR THOSE WITH A DESIRE TO STOP DRINKING</h4>
 	<p><font size="' . $medium . '">A.A. PREAMBLE<br/>Alcoholics Anonymous is a fellowship of men and women who share their experience, strength and hope with each other that they may solve their common problem and help others to recover from alcoholism. The only requirement for membership is a desire to stop drinking. There are no dues or fees for AA membership; we are self-supporting through our own contributions. AA is not allied with any sect, denomination, politics, organization or institution; does not wish to engage in any controversy, neither endorses nor opposes any causes. Our primary purpose is to stay sober and help other alcoholics to achieve sobriety.</font></p>
-	<p><font size="' . $medium . '">GRAND STRAND INTERGROUP OF ALCOHOLICS ANONYMOUS<br />grandstrandintergroup@gmail.com<br />www.aamyrtlebeach.org</font></p>
-	<p><font size="8">THIS LIST OF AA MEETINGS IS NOT TO BE USED FOR MAILINGS UNDER ANY CIRCUMSTANCES</font></p>';
+	<p><font size="' . $medium_2 . '">GRAND STRAND INTERGROUP OF ALCOHOLICS ANONYMOUS<br/>PO Box 2553, Myrtle Beach, SC 29578<br />grandstrandintergroup@gmail.com<br />www.aamyrtlebeach.org</font></p>
+	<p><font size="9">THIS LIST OF AA MEETINGS IS NOT TO BE USED FOR MAILINGS UNDER ANY CIRCUMSTANCES</font></p>';
 	
 	$innerHTML = '
 	<style>
